@@ -249,19 +249,20 @@
         min-width: 140px;
       }
 
-      form.entry {
+      form.entry,
+      div.entry {
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
-      form.entry label {
+      .entry label {
         font-size: 0.78rem;
         font-weight: 600;
         color: var(--ink-soft);
       }
-      form.entry input,
-      form.entry select,
-      form.entry textarea {
+      .entry input,
+      .entry select,
+      .entry textarea {
         font-family: inherit;
         font-size: 0.95rem;
         border: 1px solid var(--line);
@@ -337,7 +338,7 @@
         bottom: 24px;
         transform: translateX(-50%);
         background: var(--ink);
-        color: #fff;
+        color: var(--bg);
         padding: 10px 18px;
         border-radius: 999px;
         font-size: 0.85rem;
@@ -399,10 +400,13 @@
           const tab = ref("dashboard");
           const toast = ref("");
 
-          const isAdmin = ref(localStorage.getItem("kas_admin") === "1");
+          // Status admin hanya bertahan selama tab terbuka (sessionStorage),
+          // dan selalu sinkron dengan password yang tersimpan.
+          const adminPass = ref(sessionStorage.getItem("kas_pass") || "");
+          const isAdmin = ref(adminPass.value !== "");
           const showLogin = ref(false);
           const passInput = ref("");
-          const adminPass = ref(sessionStorage.getItem("kas_pass") || "");
+          const loggingIn = ref(false);
 
           const search = ref("");
           const filterJenis = ref("semua");
@@ -477,29 +481,44 @@
               .sort((a, b) => b.total - a.total);
           });
 
-          function doLogin() {
-            if (passInput.value.trim() === "") {
-              return;
-            }
-            // Password sebenarnya divalidasi server saat menyimpan data.
-            adminPass.value = passInput.value;
-            sessionStorage.setItem("kas_pass", adminPass.value);
-            isAdmin.value = true;
-            localStorage.setItem("kas_admin", "1");
-            showLogin.value = false;
-            passInput.value = "";
-            flashToast("Mode admin aktif");
-          }
-          function logout() {
-            isAdmin.value = false;
-            localStorage.removeItem("kas_admin");
-            sessionStorage.removeItem("kas_pass");
-            tab.value = "dashboard";
-          }
-
           function flashToast(msg) {
             toast.value = msg;
             setTimeout(() => (toast.value = ""), 2200);
+          }
+
+          async function doLogin() {
+            if (passInput.value.trim() === "" || loggingIn.value) return;
+            loggingIn.value = true;
+            try {
+              const res = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                  action: "login",
+                  password: passInput.value,
+                }),
+              });
+              const json = await res.json();
+              if (json.ok) {
+                adminPass.value = passInput.value;
+                sessionStorage.setItem("kas_pass", adminPass.value);
+                isAdmin.value = true;
+                showLogin.value = false;
+                passInput.value = "";
+                flashToast("Mode admin aktif");
+              } else {
+                flashToast(json.error || "Password salah");
+              }
+            } catch (e) {
+              flashToast("Gagal terhubung ke server");
+            }
+            loggingIn.value = false;
+          }
+
+          function logout() {
+            isAdmin.value = false;
+            adminPass.value = "";
+            sessionStorage.removeItem("kas_pass");
+            tab.value = "dashboard";
           }
 
           function openAdd() {
@@ -519,6 +538,17 @@
             formJumlah.value = item.jumlah;
             formKet.value = item.keterangan;
             showForm.value = true;
+          }
+
+          // Jika server menolak karena password salah, keluarkan dari mode admin.
+          function handleAuthError(msg) {
+            if (msg === "Password salah.") {
+              logout();
+              showForm.value = false;
+              flashToast("Sesi admin tidak valid, silakan masuk lagi");
+              return true;
+            }
+            return false;
           }
 
           async function submitForm() {
@@ -550,7 +580,7 @@
                     : "Transaksi ditambahkan",
                 );
                 await load();
-              } else {
+              } else if (!handleAuthError(json.error)) {
                 flashToast(json.error || "Gagal menyimpan");
               }
             } catch (e) {
@@ -574,7 +604,7 @@
               if (json.ok) {
                 flashToast("Transaksi dihapus");
                 await load();
-              } else {
+              } else if (!handleAuthError(json.error)) {
                 flashToast(json.error || "Gagal menghapus");
               }
             } catch (e) {
@@ -593,6 +623,7 @@
             isAdmin,
             showLogin,
             passInput,
+            loggingIn,
             doLogin,
             logout,
             search,
@@ -694,7 +725,9 @@
         <label>Password</label>
         <input type="password" v-model="passInput" @keyup.enter="doLogin" placeholder="Masukkan password admin" />
       </div>
-      <button class="submit-btn" @click="doLogin" style="margin-top:10px;">Masuk</button>
+      <button class="submit-btn" @click="doLogin" :disabled="loggingIn" style="margin-top:10px;width:100%;">
+        {{ loggingIn ? 'Memeriksa...' : 'Masuk' }}
+      </button>
     </div>
   </div>
 
