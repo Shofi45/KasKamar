@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Buku Kas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+    <style>
+      :root {
+        --bg: #faf8f3;
+        --surface: #ffffff;
+        --ink: #1b231f;
+        --ink-soft: #5b655f;
+        --line: #e4e0d6;
+        --hijau: #1f4d3d;
+        --hijau-soft: #e7efea;
+        --emas: #b4872b;
+        --merah: #a5382f;
+        --merah-soft: #f7e9e7;
+        --radius: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        -webkit-font-smoothing: antialiased;
+      }
+      h1,
+      h2,
+      h3,
+      .serif {
+        font-family: "Lora", Georgia, serif;
+      }
+      #app {
+        max-width: 760px;
+        margin: 0 auto;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header.top {
+        padding: 22px 20px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--line);
+      }
+      header.top h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--hijau);
+      }
+      header.top p {
+        margin: 2px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+      .login-btn {
+        border: 1px solid var(--hijau);
+        background: var(--surface);
+        color: var(--hijau);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .login-btn.active {
+        background: var(--hijau);
+        color: #fff;
+      }
+
+      main {
+        flex: 1;
+        padding: 18px 20px 100px;
+      }
+
+      .saldo-card {
+        background: var(--hijau);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+      .saldo-card .label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin: 0 0 6px;
+      }
+      .saldo-card .angka {
+        font-family: "Lora", serif;
+        font-size: 2.1rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .ringkasan {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .ringkasan .item {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .ringkasan .item .l {
+        font-size: 0.72rem;
+        opacity: 0.85;
+      }
+      .ringkasan .item .v {
+        font-family: "Lora", serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 6px;
+        margin: 18px 0 14px;
+        border-bottom: 1px solid var(--line);
+        overflow-x: auto;
+      }
+      .tabs button {
+        background: none;
+        border: none;
+        padding: 10px 4px;
+        margin-right: 14px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ink-soft);
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+      }
+      .tabs button.active {
+        color: var(--hijau);
+        border-bottom-color: var(--hijau);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        margin-bottom: 10px;
+      }
+      .trx-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .trx-row .nama {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .trx-row .meta {
+        font-size: 0.78rem;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      .trx-row .jumlah {
+        font-family: "Lora", serif;
+        font-weight: 700;
+        font-size: 1rem;
+        white-space: nowrap;
+      }
+      .jumlah.masuk {
+        color: var(--hijau);
+      }
+      .jumlah.keluar {
+        color: var(--merah);
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-top: 4px;
+      }
+      .badge.masuk {
+        background: var(--hijau-soft);
+        color: var(--hijau);
+      }
+      .badge.keluar {
+        background: var(--merah-soft);
+        color: var(--merah);
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .row-actions button {
+        font-size: 0.75rem;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 5px 10px;
+        cursor: pointer;
+        color: var(--ink-soft);
+      }
+
+      .filter-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .filter-bar input,
+      .filter-bar select {
+        font-family: inherit;
+        font-size: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .filter-bar input {
+        flex: 1;
+        min-width: 140px;
+      }
+
+      form.entry {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      form.entry label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--ink-soft);
+      }
+      form.entry input,
+      form.entry select,
+      form.entry textarea {
+        font-family: inherit;
+        font-size: 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: var(--bg);
+        color: var(--ink);
+        width: 100%;
+      }
+      .jenis-toggle {
+        display: flex;
+        gap: 8px;
+      }
+      .jenis-toggle button {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: var(--ink-soft);
+      }
+      .jenis-toggle button.sel-masuk {
+        background: var(--hijau-soft);
+        color: var(--hijau);
+        border-color: var(--hijau);
+      }
+      .jenis-toggle button.sel-keluar {
+        background: var(--merah-soft);
+        color: var(--merah);
+        border-color: var(--merah);
+      }
+      .submit-btn {
+        margin-top: 4px;
+        background: var(--hijau);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      .submit-btn:disabled {
+        opacity: 0.5;
+      }
+
+      .anggota-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .anggota-row .nama {
+        font-weight: 600;
+      }
+      .anggota-row .total {
+        font-family: "Lora", serif;
+        font-weight: 700;
+        color: var(--hijau);
+      }
+
+      .empty {
+        text-align: center;
+        color: var(--ink-soft);
+        padding: 40px 10px;
+        font-size: 0.9rem;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        z-index: 50;
+      }
+      .modal-bg {
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 20, 18, 0.45);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 40;
+      }
+      .modal {
+        background: var(--surface);
+        width: 100%;
+        max-width: 760px;
+        border-radius: 18px 18px 0 0;
+        padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+      }
+      @media (min-width: 600px) {
+        .modal-bg {
+          align-items: center;
+        }
+        .modal {
+          border-radius: 16px;
+          max-width: 420px;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #15181a;
+          --surface: #1e2224;
+          --ink: #f1efe9;
+          --ink-soft: #9ba39c;
+          --line: #333935;
+          --hijau-soft: #1b2e27;
+          --merah-soft: #332120;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      const { createApp, ref, computed, onMounted } = Vue;
+
+      // GANTI dengan URL Web App dari deployment Google Apps Script kamu (Code.gs)
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbxoKGBEHkKxuuUxgjJu5BQNg21ajQfau60wMwOTsc-aRPimnKSlVAI4EckqSSz8ufBQ/exec";
+
+      createApp({
+        setup() {
+          const items = ref([]);
+          const loading = ref(true);
+          const errorMsg = ref("");
+          const tab = ref("dashboard");
+          const toast = ref("");
+
+          const isAdmin = ref(localStorage.getItem("kas_admin") === "1");
+          const showLogin = ref(false);
+          const passInput = ref("");
+          const adminPass = ref(sessionStorage.getItem("kas_pass") || "");
+
+          const search = ref("");
+          const filterJenis = ref("semua");
+
+          const showForm = ref(false);
+          const editingId = ref(null);
+          const formJenis = ref("Masuk");
+          const formNama = ref("");
+          const formTanggal = ref(new Date().toISOString().slice(0, 10));
+          const formJumlah = ref("");
+          const formKet = ref("");
+          const saving = ref(false);
+
+          function rupiah(n) {
+            return "Rp" + Number(n || 0).toLocaleString("id-ID");
+          }
+
+          async function load() {
+            loading.value = true;
+            errorMsg.value = "";
+            try {
+              const res = await fetch(API_URL);
+              const json = await res.json();
+              if (json.ok) {
+                items.value = json.data.sort((a, b) =>
+                  b.tanggal.localeCompare(a.tanggal),
+                );
+              } else {
+                errorMsg.value = json.error || "Gagal memuat data.";
+              }
+            } catch (e) {
+              errorMsg.value =
+                "Tidak bisa terhubung ke Google Sheet. Cek URL API di index.html.";
+            }
+            loading.value = false;
+          }
+
+          const totalMasuk = computed(() =>
+            items.value
+              .filter((i) => i.jenis === "Masuk")
+              .reduce((s, i) => s + i.jumlah, 0),
+          );
+          const totalKeluar = computed(() =>
+            items.value
+              .filter((i) => i.jenis === "Keluar")
+              .reduce((s, i) => s + i.jumlah, 0),
+          );
+          const saldo = computed(() => totalMasuk.value - totalKeluar.value);
+
+          const filtered = computed(() => {
+            return items.value.filter((i) => {
+              const matchSearch =
+                i.nama.toLowerCase().includes(search.value.toLowerCase()) ||
+                (i.keterangan || "")
+                  .toLowerCase()
+                  .includes(search.value.toLowerCase());
+              const matchJenis =
+                filterJenis.value === "semua" || i.jenis === filterJenis.value;
+              return matchSearch && matchJenis;
+            });
+          });
+
+          const anggotaList = computed(() => {
+            const map = {};
+            items.value
+              .filter((i) => i.jenis === "Masuk")
+              .forEach((i) => {
+                map[i.nama] = (map[i.nama] || 0) + i.jumlah;
+              });
+            return Object.entries(map)
+              .map(([nama, total]) => ({ nama, total }))
+              .sort((a, b) => b.total - a.total);
+          });
+
+          function doLogin() {
+            if (passInput.value.trim() === "") {
+              return;
+            }
+            // Password sebenarnya divalidasi server saat menyimpan data.
+            adminPass.value = passInput.value;
+            sessionStorage.setItem("kas_pass", adminPass.value);
+            isAdmin.value = true;
+            localStorage.setItem("kas_admin", "1");
+            showLogin.value = false;
+            passInput.value = "";
+            flashToast("Mode admin aktif");
+          }
+          function logout() {
+            isAdmin.value = false;
+            localStorage.removeItem("kas_admin");
+            sessionStorage.removeItem("kas_pass");
+            tab.value = "dashboard";
+          }
+
+          function flashToast(msg) {
+            toast.value = msg;
+            setTimeout(() => (toast.value = ""), 2200);
+          }
+
+          function openAdd() {
+            editingId.value = null;
+            formJenis.value = "Masuk";
+            formNama.value = "";
+            formTanggal.value = new Date().toISOString().slice(0, 10);
+            formJumlah.value = "";
+            formKet.value = "";
+            showForm.value = true;
+          }
+          function openEdit(item) {
+            editingId.value = item.id;
+            formJenis.value = item.jenis;
+            formNama.value = item.nama;
+            formTanggal.value = item.tanggal;
+            formJumlah.value = item.jumlah;
+            formKet.value = item.keterangan;
+            showForm.value = true;
+          }
+
+          async function submitForm() {
+            if (!formNama.value || !formJumlah.value) {
+              return;
+            }
+            saving.value = true;
+            const payload = {
+              action: editingId.value ? "edit" : "add",
+              id: editingId.value,
+              password: adminPass.value,
+              tanggal: formTanggal.value,
+              nama: formNama.value,
+              jenis: formJenis.value,
+              jumlah: formJumlah.value,
+              keterangan: formKet.value,
+            };
+            try {
+              const res = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(payload),
+              });
+              const json = await res.json();
+              if (json.ok) {
+                showForm.value = false;
+                flashToast(
+                  editingId.value
+                    ? "Transaksi diperbarui"
+                    : "Transaksi ditambahkan",
+                );
+                await load();
+              } else {
+                flashToast(json.error || "Gagal menyimpan");
+              }
+            } catch (e) {
+              flashToast("Gagal terhubung ke server");
+            }
+            saving.value = false;
+          }
+
+          async function hapus(item) {
+            if (!confirm("Hapus transaksi " + item.nama + "?")) return;
+            try {
+              const res = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                  action: "delete",
+                  id: item.id,
+                  password: adminPass.value,
+                }),
+              });
+              const json = await res.json();
+              if (json.ok) {
+                flashToast("Transaksi dihapus");
+                await load();
+              } else {
+                flashToast(json.error || "Gagal menghapus");
+              }
+            } catch (e) {
+              flashToast("Gagal terhubung ke server");
+            }
+          }
+
+          onMounted(load);
+
+          return {
+            items,
+            loading,
+            errorMsg,
+            tab,
+            toast,
+            isAdmin,
+            showLogin,
+            passInput,
+            doLogin,
+            logout,
+            search,
+            filterJenis,
+            filtered,
+            totalMasuk,
+            totalKeluar,
+            saldo,
+            rupiah,
+            anggotaList,
+            showForm,
+            editingId,
+            formJenis,
+            formNama,
+            formTanggal,
+            formJumlah,
+            formKet,
+            saving,
+            openAdd,
+            openEdit,
+            submitForm,
+            hapus,
+          };
+        },
+        template: `
+  <header class="top">
+    <div>
+      <h1>Buku Kas</h1>
+      <p>Catatan pemasukan &amp; pengeluaran bersama</p>
+    </div>
+    <button v-if="!isAdmin" class="login-btn" @click="showLogin = true">Masuk Admin</button>
+    <button v-else class="login-btn active" @click="logout">Admin • Keluar</button>
+  </header>
+
+  <main>
+    <div class="saldo-card">
+      <p class="label">Saldo saat ini</p>
+      <p class="angka">{{ rupiah(saldo) }}</p>
+      <div class="ringkasan">
+        <div class="item"><div class="l">Total Masuk</div><div class="v">{{ rupiah(totalMasuk) }}</div></div>
+        <div class="item"><div class="l">Total Keluar</div><div class="v">{{ rupiah(totalKeluar) }}</div></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button :class="{active: tab==='dashboard'}" @click="tab='dashboard'">Riwayat</button>
+      <button :class="{active: tab==='anggota'}" @click="tab='anggota'">Rekap Anggota</button>
+    </div>
+
+    <div v-if="loading" class="empty">Memuat data...</div>
+    <div v-else-if="errorMsg" class="empty">{{ errorMsg }}</div>
+
+    <template v-else-if="tab==='dashboard'">
+      <div class="filter-bar">
+        <input v-model="search" placeholder="Cari nama / keterangan" />
+        <select v-model="filterJenis">
+          <option value="semua">Semua</option>
+          <option value="Masuk">Masuk</option>
+          <option value="Keluar">Keluar</option>
+        </select>
+      </div>
+
+      <div v-if="filtered.length===0" class="empty">Belum ada transaksi.</div>
+
+      <div class="card" v-for="item in filtered" :key="item.id">
+        <div class="trx-row">
+          <div>
+            <div class="nama">{{ item.nama }}</div>
+            <div class="meta">{{ item.tanggal }} · {{ item.keterangan || '-' }}</div>
+            <span class="badge" :class="item.jenis==='Masuk' ? 'masuk' : 'keluar'">{{ item.jenis }}</span>
+          </div>
+          <div class="jumlah" :class="item.jenis==='Masuk' ? 'masuk' : 'keluar'">
+            {{ item.jenis==='Masuk' ? '+' : '-' }}{{ rupiah(item.jumlah) }}
+          </div>
+        </div>
+        <div class="row-actions" v-if="isAdmin">
+          <button @click="openEdit(item)">Edit</button>
+          <button @click="hapus(item)">Hapus</button>
+        </div>
+      </div>
+    </template>
+
+    <template v-else-if="tab==='anggota'">
+      <div v-if="anggotaList.length===0" class="empty">Belum ada data anggota.</div>
+      <div class="card anggota-row" v-for="a in anggotaList" :key="a.nama">
+        <div class="nama">{{ a.nama }}</div>
+        <div class="total">{{ rupiah(a.total) }}</div>
+      </div>
+    </template>
+  </main>
+
+  <button v-if="isAdmin" class="submit-btn" style="position:fixed;bottom:24px;left:20px;right:20px;max-width:720px;margin:0 auto;"
+    @click="openAdd">+ Tambah Transaksi</button>
+
+  <div class="modal-bg" v-if="showLogin" @click.self="showLogin=false">
+    <div class="modal">
+      <h3 class="serif">Masuk sebagai Admin</h3>
+      <div class="entry">
+        <label>Password</label>
+        <input type="password" v-model="passInput" @keyup.enter="doLogin" placeholder="Masukkan password admin" />
+      </div>
+      <button class="submit-btn" @click="doLogin" style="margin-top:10px;">Masuk</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" v-if="showForm" @click.self="showForm=false">
+    <div class="modal">
+      <h3 class="serif">{{ editingId ? 'Edit Transaksi' : 'Tambah Transaksi' }}</h3>
+      <form class="entry" @submit.prevent="submitForm">
+        <div class="jenis-toggle">
+          <button type="button" :class="{'sel-masuk': formJenis==='Masuk'}" @click="formJenis='Masuk'">Pemasukan</button>
+          <button type="button" :class="{'sel-keluar': formJenis==='Keluar'}" @click="formJenis='Keluar'">Pengeluaran</button>
+        </div>
+        <label>Nama</label>
+        <input v-model="formNama" placeholder="Nama yang membayar / penerima" required />
+        <label>Tanggal</label>
+        <input type="date" v-model="formTanggal" required />
+        <label>Jumlah (Rp)</label>
+        <input type="number" v-model="formJumlah" placeholder="0" required />
+        <label>Keterangan (opsional)</label>
+        <textarea v-model="formKet" rows="2" placeholder="Contoh: Kas bulan Januari"></textarea>
+        <button class="submit-btn" type="submit" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" v-if="toast">{{ toast }}</div>
+  `,
+      }).mount("#app");
+    </script>
+  </body>
+</html>
